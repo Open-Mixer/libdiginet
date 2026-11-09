@@ -2,7 +2,7 @@
 # Copyright (C) 2026 Pau Aliagas <linuxnow@gmail.com>
 name: release
 
-# Packages through the shared release workflows of FreeMixer/.github. A tag v<version> builds signed
+# Packages through the shared release workflows of Open-Mixer/.github. A tag v<version> builds signed
 # RPMs (Fedora 44, x86_64 and aarch64) and DEBs (Debian bookworm and trixie, amd64 and arm64),
 # publishes them to the FreeMixer channel and attaches them to the GitHub release. A dispatched run
 # (workflow_dispatch) is a dry run: it builds and lints everything and publishes nothing.
@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   rpm:
-    uses: FreeMixer/.github/.github/workflows/build-rpm.yml@v1
+    uses: Open-Mixer/.github/.github/workflows/build-rpm.yml@main
     with:
       package-name: libdiginet
       binary-names: libdiginet libdiginet-devel diginet-tools
@@ -35,7 +35,7 @@ jobs:
   # or skipped RPM job skips this one, so no DEB is published after a failed RPM.
   deb:
     needs: rpm
-    uses: FreeMixer/.github/.github/workflows/build-deb.yml@v1
+    uses: Open-Mixer/.github/.github/workflows/build-deb.yml@main
     with:
       package-name: libdiginet
       binary-names: libdiginet0 libdiginet-transport0 libdiginet-dev diginet-tools
