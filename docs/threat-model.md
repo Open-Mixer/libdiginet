@@ -44,7 +44,7 @@ MAC and the Digidesign OUI 00:a0:7e (`diginet_mac_is_digidesign`), both of which
 segment can forge, and the desk takes a session with whichever host answers
 (`docs/overview.md`, "Network"). Everything read from the socket is untrusted. The second
 boundary is local: whoever can execute `diginet-packet-helper` receives a raw packet socket
-without holding `cap_net_raw` themselves.
+without holding `cap_net_raw` themselves. The packages draw that boundary at the group `diginet`.
 
 ## What the code assumes and enforces
 
@@ -80,6 +80,12 @@ without holding `cap_net_raw` themselves.
   spawned with an empty environment; `diginet-packet-helper` refuses arguments and a descriptor 3
   that is not a connected `AF_UNIX` socket.
 - `diginet_packet_open`: interface name length checked against `IFNAMSIZ`.
+- Packaging: the two binaries that carry `cap_net_raw`, `diginet-packet-helper` and
+  `diginet-probe`, are installed owned by root and the group `diginet`, mode 0750
+  (`packaging/libdiginet.spec` with `packaging/diginet-tools.sysusers`, and
+  `debian/diginet-tools.postinst`); nobody is added to the group. `tests/conformance-packaging.sh`
+  (ARM 4) holds both packagings to it, and `tests/package-check.sh` reads owner, mode and
+  capability from the installed packages.
 
 ## Fuzz coverage
 
@@ -100,10 +106,10 @@ Harnesses are built with ASan and UBSan and run in CI (`.github/workflows/fuzz.y
 - The packet socket and descriptor io (`transport/src/diginet_io.c`), including
   `diginet_packet_receive_fd`, have no harness; they are covered by `tests/test_fdio.c` and
   `tests/test_anyif.c` only.
-- `diginet-packet-helper` puts no limit on who may run it: any local user who can execute it gets
-  an `AF_PACKET` `SOCK_RAW` socket. Beyond the initial bind to 0x885F, the code applies no filter
-  and no lock to what the receiver sends or binds on that socket. Restrict execution (file mode or
-  group) where local users are not trusted.
+- Beyond the initial bind to 0x885F, the code applies no filter and no lock to what a member of
+  the group `diginet` sends or binds on the socket the helper hands over.
+- A build installed from the tree (`make install`) carries mode 0755 and no capability; whoever
+  sets `cap_net_raw` on it by hand also sets its owner and mode.
 - No authentication on the wire. Anyone on the segment can forge a desk's MAC, inject data frames
   and acks, end a session with a forged e3 or a foreign e1, or fill the 8-slot mux table with
   forged announces until they go silent. Not enforced; `docs/overview.md` asks for a dedicated segment.

@@ -1,15 +1,22 @@
 #!/bin/sh
 # diginet-probe and diginet-packet-helper open a packet socket; give each that one capability,
-# nothing more. dpkg unpacks a binary without it, so it is set here on every configure.
+# nothing more, and let only root and the group diginet run them. dpkg unpacks a binary without
+# the capability, so it is set here on every configure, after owner and mode: a chown drops it.
+# An owner or mode the administrator set with dpkg-statoverride is kept.
 set -e
 
 if [ "$1" = configure ]; then
-	if command -v setcap >/dev/null 2>&1; then
-		for b in /usr/bin/diginet-probe /usr/bin/diginet-packet-helper; do
+	getent group diginet >/dev/null || addgroup --system diginet
+	for b in /usr/bin/diginet-probe /usr/bin/diginet-packet-helper; do
+		if ! dpkg-statoverride --list "$b" >/dev/null 2>&1; then
+			chown root:diginet "$b"
+			chmod 0750 "$b"
+		fi
+		if command -v setcap >/dev/null 2>&1; then
 			setcap cap_net_raw=ep "$b" ||
 				echo "diginet-tools: could not set cap_net_raw on $b; run it as root or set it by hand" >&2
-		done
-	fi
+		fi
+	done
 fi
 
 #DEBHELPER#

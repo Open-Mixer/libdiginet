@@ -52,7 +52,7 @@ Description: Control|24 and ProControl libraries, development files
 Package: diginet-tools
 Section: utils
 Architecture: any
-Depends: libcap2-bin, ${shlibs:Depends}, ${misc:Depends}
+Depends: adduser, libcap2-bin, ${shlibs:Depends}, ${misc:Depends}
 Description: first test of a Digidesign Control|24 or ProControl
  diginet-probe wakes a Control|24 or ProControl cabled to a network interface,
  moves a fader, lights a lamp, writes a scribble strip, logs and decodes every

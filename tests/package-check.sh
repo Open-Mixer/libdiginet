@@ -9,7 +9,7 @@
 # installs libdiginet, its development package and diginet-tools with what they pull in; builds a
 # consumer outside the tree against the development package through pkg-config alone, and runs it
 # against the installed shared libraries; checks diginet-probe runs and that it and
-# diginet-packet-helper carry cap_net_raw.
+# diginet-packet-helper carry cap_net_raw, owned by root and the group diginet, mode 0750.
 set -eu
 dir=$(cd "$1" && pwd)
 if command -v dnf >/dev/null 2>&1; then
@@ -56,6 +56,9 @@ for b in /usr/bin/diginet-probe /usr/bin/diginet-packet-helper; do
 	caps=$(getcap "$b")
 	echo "$caps"
 	echo "$caps" | grep -q 'cap_net_raw[=+]ep' || { echo "FAIL: $b has no cap_net_raw"; exit 1; }
+	# only root and the group diginet may run it (docs/threat-model.md)
+	own=$(stat -c '%a %U %G' "$b")
+	[ "$own" = "750 root diginet" ] || { echo "FAIL: $b is $own, not 750 root diginet"; exit 1; }
 done
 # The helper loads no shared library of ours while it holds the capability (read from a copy,
 # for the reason below).
