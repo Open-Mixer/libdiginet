@@ -1,5 +1,5 @@
 name: fuzz
-# The libFuzzer harnesses of fuzz/ (fuzz/README.md), on every push and pull request: each built
+# The libFuzzer harnesses of fuzz/ (fuzz/README.md), on a v* tag and on workflow_dispatch: each built
 # with clang under AddressSanitizer and UndefinedBehaviorSanitizer and fuzzed for 60 s from its
 # seed corpus; every patch of fuzz/sabotage/ found at the property it names; every check's own
 # mutant record met, at that check, on its seed; the coverage witness held to its floor, with
@@ -8,8 +8,8 @@ name: fuzz
 # artifact. make test stays in ci.yml.
 on:
   push:
-    branches: [main]
-  pull_request:
+    tags: ['v*']
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
