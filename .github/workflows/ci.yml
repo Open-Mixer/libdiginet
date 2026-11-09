@@ -93,4 +93,4 @@ jobs:
   # the checks every FreeMixer repository runs on what it publishes: commit messages, private references, and no
   # local copy of either (Open-Mixer/.github's public-sources-check)
   public-sources:
-    uses: Open-Mixer/.github/.github/workflows/public-sources-check.yml@main
+    uses: Open-Mixer/.github/.github/workflows/public-sources-check.yml@openmixer-v1
