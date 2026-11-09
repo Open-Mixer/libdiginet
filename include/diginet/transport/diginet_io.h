@@ -99,8 +99,9 @@ int diginet_packet_receive_fd(int unix_sock);
  * PATH), a program that holds cap_net_raw (docs/diginet-packet-helper.1): it is started with a
  * connected AF_UNIX socket on its descriptor 3 and an empty environment, opens the socket, passes
  * it back and exits. Returns the descriptor; -ENOENT when there is no such program, -EPERM when
- * it ran without the capability (its exit status 1), -EPROTO when it ended any other way without
- * passing one, or a negative errno. Not for a hot path: it starts a process and waits for it. */
+ * it ran without the capability (its exit status 1), -EACCES when the caller may not run it (the
+ * packages let only root and the group diginet run it), -EPROTO when it ended any other way
+ * without passing one, or a negative errno. Not for a hot path: it starts a process and waits for it. */
 int diginet_packet_open_by_helper(const char *helper);
 
 #ifdef __cplusplus

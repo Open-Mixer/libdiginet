@@ -49,13 +49,21 @@ it says "needs cap_net_raw" on standard error.
 Descriptor 3 is not a connected Unix socket, an argument was given, or the socket could not be
 opened or passed; standard error says which.
 .SH FILES
-The packages install it with the one capability it needs, as
+The packages install it owned by root and the group
+.BR diginet ,
+mode 0750, with the one capability it needs, as
 .PP
 .RS
+chown root:diginet /usr/bin/diginet-packet-helper
+.br
+chmod 0750 /usr/bin/diginet-packet-helper
+.br
 setcap cap_net_raw=ep /usr/bin/diginet-packet-helper
 .RE
 .PP
-and check it with
+in that order, since a
+.BR chown (1)
+drops the capability, and check it with
 .BR getcap (8),
 because
 .BR install (1)
@@ -63,8 +71,26 @@ and every rebuild make a binary without it. It is linked statically against libd
 loads no shared library of the project while it holds the capability.
 .SH SECURITY
 Any user who may run the helper gets a raw socket for EtherType 0x885F on every interface: one
-that can hear and send DigiNet frames, and nothing else. A site that wants fewer users to have
-that restricts who may run it, for example with a group of its own and mode 0750.
+that can hear and send DigiNet frames. So only root and the members of the group
+.B diginet
+may run it; the packages make the group (from
+.I /usr/lib/sysusers.d/diginet-tools.conf
+on Fedora, with
+.BR addgroup (8)
+on Debian) and add nobody to it. A user, or the service account, that drives a desk joins it:
+.PP
+.RS
+usermod \-aG diginet
+.I user
+.RE
+.PP
+For anyone else the start fails with
+.BR EACCES ,
+which
+.BR diginet_packet_open_by_helper ()
+returns as
+.BR \-EACCES .
+The helper takes no arguments, so no caller can choose the interface, the protocol or the packets.
 .SH SEE ALSO
 .BR diginet-probe (1),
 .BR packet (7),

@@ -59,7 +59,9 @@ It ends with a summary, one line per open question it can answer.
 Exit status: 0 when every step was acknowledged; 2 for a usage error; 3 when the desk is in
 another host's session; 4 when no desk answered; 5 when the desk did not ACK our data.
 
-`setcap` has to be repeated after every rebuild: a new binary carries no capability.
+`setcap` has to be repeated after every rebuild: a new binary carries no capability. The packages
+install the probe and the helper owned by root and the group `diginet`, mode 0750, so only root and
+the members of that group run them (`usermod -aG diginet <user>`).
 
 ## Every interface, with no capability (`--any`)
 

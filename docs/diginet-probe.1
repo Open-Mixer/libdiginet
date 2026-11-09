@@ -38,7 +38,10 @@ capability:
 sudo setcap cap_net_raw=ep /path/to/diginet-probe
 .RE
 .PP
-The packages set it on install.
+The packages set it on install, and install the probe owned by root and the group
+.BR diginet ,
+mode 0750: only root and the members of that group may run it, as for
+.BR diginet-packet-helper (1).
 .SH OPTIONS
 .TP
 .BI \-i " interface" "\fR, \fP\-\-interface " interface

@@ -20,6 +20,8 @@ BuildRequires:  gcc
 BuildRequires:  make
 BuildRequires:  git-core
 BuildRequires:  pkgconf-pkg-config
+# %%{_sysusersdir}, where the group diginet is declared
+BuildRequires:  systemd-rpm-macros
 
 %description
 libdiginet speaks DigiNet, the raw Ethernet protocol of the Digidesign Control|24 and
@@ -72,6 +74,8 @@ with cap_net_raw and nothing else.
 make DESTDIR=%{buildroot} PREFIX=%{_prefix} LIBDIR=%{_libdir} INCDIR=%{_includedir} \
   BINDIR=%{_bindir} DATADIR=%{_datadir} MANDIR=%{_mandir} install-shared
 
+install -D -m 644 packaging/diginet-tools.sysusers %{buildroot}%{_sysusersdir}/diginet-tools.conf
+
 %check
 make CFLAGS="%{optflags}" test
 
@@ -104,8 +108,11 @@ make CFLAGS="%{optflags}" test
 %files -n diginet-tools
 %license LICENSE
 %doc README.md
-%caps(cap_net_raw=ep) %{_bindir}/diginet-probe
-%caps(cap_net_raw=ep) %{_bindir}/diginet-packet-helper
+# Only root and the group diginet may run the two binaries that carry cap_net_raw: whoever runs
+# them gets a packet socket. The group comes from the sysusers file below.
+%attr(0750,root,diginet) %caps(cap_net_raw=ep) %{_bindir}/diginet-probe
+%attr(0750,root,diginet) %caps(cap_net_raw=ep) %{_bindir}/diginet-packet-helper
+%{_sysusersdir}/diginet-tools.conf
 %{_mandir}/man1/diginet-probe.1*
 %{_mandir}/man1/diginet-packet-helper.1*
 

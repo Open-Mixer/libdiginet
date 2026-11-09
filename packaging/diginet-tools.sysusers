@@ -1,0 +1,3 @@
+# The group that may run diginet-probe and diginet-packet-helper, the two binaries that carry
+# cap_net_raw. A user who drives a desk joins it: usermod -aG diginet <user>.
+g diginet -
