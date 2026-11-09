@@ -4,8 +4,8 @@ name: release
 
 # Packages through the shared release workflows of FreeMixer/.github. A tag v<version> builds signed
 # RPMs (Fedora 44, x86_64 and aarch64) and DEBs (Debian bookworm and trixie, amd64 and arm64),
-# publishes them to the FreeMixer channel and attaches them to the GitHub release. A pull request or
-# any other run is a dry run: it builds and lints everything and publishes nothing.
+# publishes them to the FreeMixer channel and attaches them to the GitHub release. A dispatched run
+# (workflow_dispatch) is a dry run: it builds and lints everything and publishes nothing.
 #
 # Either way, the packages the run built are then installed in clean containers of every release and
 # architecture, and a consumer is built against the development package (tests/package-check.sh).
@@ -13,7 +13,6 @@ name: release
 on:
   push:
     tags: ['v*']
-  pull_request:
   workflow_dispatch:
 
 permissions:
