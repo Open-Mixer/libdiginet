@@ -31,10 +31,9 @@ jobs:
       channel-deps: false
     secrets: inherit
 
-  # after the RPMs: both publish into one tree, and a push that loses a race is refused. A release is one wave: a red
   # or skipped RPM job skips this one, so no DEB is published after a failed RPM.
+  # beside the RPMs: the two publish jobs share one concurrency group, so their pushes never race
   deb:
-    needs: rpm
     uses: Open-Mixer/.github/.github/workflows/build-deb.yml@openmixer-v1
     with:
       package-name: libdiginet
