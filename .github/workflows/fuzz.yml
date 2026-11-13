@@ -81,6 +81,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-findings
+          name: fuzz-findings-fc${{ matrix.cell.fedora }}-${{ matrix.cell.arch }}
           path: fuzz/findings/
           if-no-files-found: ignore
