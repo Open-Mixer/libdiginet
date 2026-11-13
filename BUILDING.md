@@ -142,9 +142,9 @@ The version is the `VERSION` file; the sonames' majors are `DIGINET_ABI` and
 
 Set the version in `VERSION`, `include/diginet/diginet.h`, `Version:` in the spec and the top
 entry of `debian/changelog`, then tag `vX.Y.Z`. The tag runs `.github/workflows/release.yml`,
-which calls the shared `build-rpm.yml` and `build-deb.yml` workflows of FreeMixer/.github: signed
+which calls the shared `build-rpm.yml` and `build-deb.yml` workflows of Open-Mixer/.github: signed
 RPMs for Fedora 44 (x86_64, aarch64) and DEBs for Debian bookworm and trixie (amd64, arm64) are
-published to the FreeMixer channel and attached to the GitHub release. A pull request runs the
+published to the OpenMixer channel and attached to the GitHub release. A pull request runs the
 same workflows as a dry run that builds, lints and publishes nothing, then installs the packages
 it built in clean containers and builds a consumer against the development package. Git history
 is the changelog; no changelog file is kept.

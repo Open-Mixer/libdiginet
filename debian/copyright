@@ -1,7 +1,7 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: libdiginet
 Upstream-Contact: Pau Aliagas <linuxnow@gmail.com>
-Source: https://github.com/FreeMixer/libdiginet
+Source: https://github.com/Open-Mixer/libdiginet
 
 Files: *
 Copyright: 2026 Pau Aliagas <linuxnow@gmail.com>

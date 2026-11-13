@@ -134,7 +134,7 @@ test: $(TESTS) tests/test_probe tests/test_anyif tests/test_emu_child $(PROBE) $
 	$(RUN_TEST) tests/conformance-packaging.sh
 	$(RUN_TEST) tests/test_workflows.sh
 
-# No tracked file points into a private repository: FreeMixer/.github's private-refs check, from a
+# No tracked file points into a private repository: Open-Mixer/.github's private-refs check, from a
 # checkout of it (FREEMIXER_DOTGITHUB, else ../freemixer-dotgithub). CI runs it, with the commit
 # message check, through the public-sources-check workflow; `make test` does not, so the package
 # builds need no such checkout.

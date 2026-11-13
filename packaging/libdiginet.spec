@@ -13,7 +13,7 @@ Release:        1%{?dist}
 Summary:        Drive a Digidesign Control|24 or ProControl surface from Linux
 
 License:        GPL-3.0-or-later
-URL:            https://github.com/FreeMixer/libdiginet
+URL:            https://github.com/Open-Mixer/libdiginet
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  gcc
