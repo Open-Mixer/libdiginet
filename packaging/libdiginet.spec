@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # libdiginet, the protocol of the Digidesign Control|24 and ProControl surfaces, and
 # libdiginet-transport, the wire under it, from one source and one version; diginet-tools
-# carries diginet-probe and diginet-packet-helper.
+# carries diginet-probe, diginet-census and diginet-packet-helper.
 Name:           libdiginet
-Version:        0.1.9
+Version:        0.1.10
 # The sonames' majors. rpm derives this package's provides and every consumer's requires from
 # them. They copy DIGINET_ABI and DIGINET_TRANSPORT_ABI of include/diginet/diginet.h, and
 # tests/conformance-packaging.sh (in make test) refuses a copy that disagrees.
@@ -49,7 +49,7 @@ without a desk.
 Its documentation is on openmixer.org.
 
 %package -n diginet-tools
-Summary:        diginet-probe and diginet-packet-helper for a Control|24 or ProControl
+Summary:        diginet-probe, diginet-census and diginet-packet-helper for a Control|24 or ProControl
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 
 %description -n diginet-tools
@@ -58,6 +58,11 @@ lights a lamp, writes a scribble strip, logs and decodes every key, touch and tu
 with a summary of what the desk answered. It is installed with the one capability it needs
 to open a packet socket, cap_net_raw.
 Its documentation is on openmixer.org.
+
+diginet-census walks every control of the desk, one by one, with an operator at the desk: it
+waits for each button, fader, touch cap, V-Pot and the jog, writes each lamp, ring, meter,
+scribble strip and the counter and asks, and records what the desk sent, in a form the library's
+test suite reads back.
 
 diginet-packet-helper opens the packet socket that hears a desk on every network interface and
 hands it to the program that started it, so that program needs no capability. It is installed
@@ -108,15 +113,23 @@ make CFLAGS="%{optflags}" test
 %files -n diginet-tools
 %license LICENSE
 %doc README.md
-# Only root and the group diginet may run the two binaries that carry cap_net_raw: whoever runs
+# Only root and the group diginet may run the three binaries that carry cap_net_raw: whoever runs
 # them gets a packet socket. The group comes from the sysusers file below.
 %attr(0750,root,diginet) %caps(cap_net_raw=ep) %{_bindir}/diginet-probe
+%attr(0750,root,diginet) %caps(cap_net_raw=ep) %{_bindir}/diginet-census
 %attr(0750,root,diginet) %caps(cap_net_raw=ep) %{_bindir}/diginet-packet-helper
 %{_sysusersdir}/diginet-tools.conf
 %{_mandir}/man1/diginet-probe.1*
+%{_mandir}/man1/diginet-census.1*
 %{_mandir}/man1/diginet-packet-helper.1*
 
 %changelog
+* Fri Nov 13 2026 Pau Aliagas <linuxnow@gmail.com> - 0.1.10-1
+- diginet-census and the census inventory (diginet_census.h): every control of a Control|24
+  (1168: 556 the desk sends, 612 the host writes; the section buttons from ReaControl24's map)
+  walked with an operator at the desk, and the desk's record read back as a test
+- The library's ABI is unchanged (additions only)
+
 * Thu Nov 05 2026 Pau Aliagas <linuxnow@gmail.com> - 0.1.9-1
 - test_fdio takes the two lowest free descriptors from the process and runs
   the handover once more with a stray descriptor open, so it no longer fails

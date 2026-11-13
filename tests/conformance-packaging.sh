@@ -61,7 +61,7 @@ check() {
 		{ echo "  ARM 4: debian/control: diginet-tools does not depend on adduser"; bad=1; }
 	grep -q 'addgroup --system diginet' "$postinst" 2>/dev/null ||
 		{ echo "  ARM 4: debian postinst does not make the group diginet"; bad=1; }
-	for b in diginet-probe diginet-packet-helper; do
+	for b in diginet-probe diginet-census diginet-packet-helper; do
 		grep -q "^%attr(0750,root,diginet) %caps(cap_net_raw=ep) %{_bindir}/$b\$" "$spec" ||
 			{ echo "  ARM 4: the spec does not install $b as %attr(0750,root,diginet) with cap_net_raw"; bad=1; }
 	done
@@ -73,8 +73,8 @@ check() {
 	elif [ "$cap" -lt "$own" ] || [ "$cap" -lt "$mode" ]; then
 		echo "  ARM 4: debian postinst sets the capability before owner and mode; the chown drops it"; bad=1
 	fi
-	grep -q 'for b in /usr/bin/diginet-probe /usr/bin/diginet-packet-helper' "$postinst" 2>/dev/null ||
-		{ echo "  ARM 4: debian postinst does not cover both binaries"; bad=1; }
+	grep -q 'for b in /usr/bin/diginet-probe /usr/bin/diginet-census /usr/bin/diginet-packet-helper' "$postinst" 2>/dev/null ||
+		{ echo "  ARM 4: debian postinst does not cover the three binaries"; bad=1; }
 	return $bad
 }
 

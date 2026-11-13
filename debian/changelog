@@ -1,3 +1,13 @@
+libdiginet (0.1.10) unstable; urgency=medium
+
+  * diginet-census and the census inventory (diginet_census.h): every
+    control of a Control|24 (1168: 556 the desk sends, 612 the host writes;
+    the section buttons from ReaControl24's map) walked with an operator at
+    the desk, and the desk's record read back as a test.
+  * The library's ABI is unchanged (additions only).
+
+ -- Pau Aliagas <linuxnow@gmail.com>  Fri, 13 Nov 2026 22:30:00 +0100
+
 libdiginet (0.1.9) unstable; urgency=medium
 
   * test_fdio takes the two lowest free descriptors from the process and

@@ -14,13 +14,16 @@ DigiNet has no authentication: the desk takes a session with whichever host answ
 
 ## Status
 
-Early, and not yet tried on a desk. In the tree:
+Early. A Control|24 has been woken, moved, lit and read with `diginet-probe` (the emulator's timings are the
+measurements of 2026-10-30); the census of every control, `diginet-census`, is proven on the emulator and waits for
+its first desk run, whose record becomes a test (`tests/golden/census-c24.txt`). In the tree:
 
 1. `protocol/diginet.ksy`, the formal byte grammar, with golden-frame tests.
 2. The codecs and the Control|24 / ProControl personalities.
 3. The transport: session state machine, ack window, keepalive, retransmit, latest-wins coalescing, all tested against a desk emulator.
 4. One packet socket for every interface, and a desk mux that runs a session per desk over it, with appeared and gone notices, so a host hears every desk on every NIC, one plugged in later included. The socket can come from `diginet-packet-helper`, so the host itself needs no capability.
 5. `diginet-probe`, a command-line tool for a first test on a real desk: wake it, move a fader, light a lamp, write a scribble strip, log every press. See [probe.md](probe.md).
+6. `diginet-census`, the walk of every control with an operator at the desk, against the library's inventory (1168 controls on a Control|24, the section buttons from ReaControl24's map); its record of what the desk sent reads back as a test. See [census.md](census.md).
 
 Building and testing: [BUILDING.md](../BUILDING.md).
 

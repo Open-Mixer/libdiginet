@@ -60,6 +60,10 @@ Description: first test of a Digidesign Control|24 or ProControl
  given the one capability it needs to open a packet socket, cap_net_raw, on
  install.
  .
+ diginet-census walks every control of the desk, one by one, with an operator
+ at the desk, and records what the desk sent in a form the test suite reads
+ back. It too is given cap_net_raw on install.
+ .
  diginet-packet-helper opens the packet socket that hears a desk on every
  network interface and hands it to the program that started it, so that
  program needs no capability. It too is given cap_net_raw on install.

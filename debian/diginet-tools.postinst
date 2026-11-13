@@ -1,5 +1,5 @@
 #!/bin/sh
-# diginet-probe and diginet-packet-helper open a packet socket; give each that one capability,
+# diginet-probe, diginet-census and diginet-packet-helper open a packet socket; give each that one capability,
 # nothing more, and let only root and the group diginet run them. dpkg unpacks a binary without
 # the capability, so it is set here on every configure, after owner and mode: a chown drops it.
 # An owner or mode the administrator set with dpkg-statoverride is kept.
@@ -7,7 +7,7 @@ set -e
 
 if [ "$1" = configure ]; then
 	getent group diginet >/dev/null || addgroup --system diginet
-	for b in /usr/bin/diginet-probe /usr/bin/diginet-packet-helper; do
+	for b in /usr/bin/diginet-probe /usr/bin/diginet-census /usr/bin/diginet-packet-helper; do
 		if ! dpkg-statoverride --list "$b" >/dev/null 2>&1; then
 			chown root:diginet "$b"
 			chmod 0750 "$b"

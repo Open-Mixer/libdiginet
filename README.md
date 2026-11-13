@@ -24,7 +24,7 @@ sudo apt install libdiginet-dev diginet-tools
 
 ## Start
 
-`diginet-probe` wakes a desk on the wire and lets you move a fader, light a lamp and write a scribble strip (`man diginet-probe`). A program builds with:
+`diginet-probe` wakes a desk on the wire and lets you move a fader, light a lamp and write a scribble strip (`man diginet-probe`); `diginet-census` checks every control of the desk, one by one, and records what the desk sent (`man diginet-census`). A program builds with:
 
 ```
 cc app.c $(pkg-config --cflags --libs libdiginet-transport)

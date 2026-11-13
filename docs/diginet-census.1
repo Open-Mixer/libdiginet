@@ -1,0 +1,109 @@
+.\" SPDX-License-Identifier: GPL-3.0-or-later
+.\" Copyright (C) 2026 Pau Aliagas <linuxnow@gmail.com>
+.TH DIGINET-CENSUS 1 2026-11-13 "libdiginet" "User Commands"
+.SH NAME
+diginet-census \- every control of a Digidesign Control|24 or ProControl, checked one by one
+.SH SYNOPSIS
+.B diginet-census
+.B \-i
+.I interface
+.RI [ options ]
+.br
+.B diginet-census
+.B \-\-fd
+.I n
+.B \-\-mac
+.I mac
+.RI [ options ]
+.br
+.B diginet-census
+.B \-\-any
+.RB [ \-\-helper
+.IR path ]
+.RI [ options ]
+.SH DESCRIPTION
+.B diginet-census
+wakes the desk cabled to
+.I interface
+and walks the library's inventory of its controls in order, strip by strip, then the jog wheel and
+the counter, then the section buttons zone by zone. For a control the desk sends (a fader, a touch
+cap, a button, a V-Pot, the jog) it tells the operator what to do and waits for the desk; what comes
+is decoded and compared with the inventory. For a control the host writes (a fader motor, a lamp, a
+ring, a meter, the automation LEDs, a scribble strip, the counter) it writes the frame that exercises
+it, asks whether the desk shows it, and clears it.
+.PP
+The operator answers on standard input: Enter or
+.B y
+for seen,
+.B n
+for nothing happened or nothing shows,
+.B s
+to skip the control,
+.B q
+to stop the census where it is.
+.PP
+Three files are written to the output directory:
+.BR census.md ,
+the report with one row per control and the tally;
+.BR census-bodies.txt ,
+one line per control the desk sent, its name and the bytes, in the golden format the test suite
+reads back; and
+.BR census-frames.txt ,
+every desk frame raw.
+.SH OPTIONS
+.TP
+.BI \-i " interface"
+The interface the desk is cabled to; needs cap_net_raw.
+.TP
+.BI \-\-fd " n " \-\-mac " mac"
+A descriptor that already carries the desk's frames, and the host MAC to use.
+.TP
+.B \-\-any
+One packet socket for every interface; the desk on whichever interface it appears.
+.TP
+.BI \-\-helper " path"
+With
+.BR \-\-any :
+get the socket from this helper instead of opening it.
+.TP
+.BI \-\-desk " mac"
+With
+.BR \-\-any :
+this desk only.
+.TP
+.BI \-\-checksum " zero\fR|\fPsum"
+The header checksum of our frames (default sum).
+.TP
+.BI \-\-keepalive " seconds"
+The keepalive period (default 2).
+.TP
+.BI \-\-wait " seconds"
+How long to wait for the desk's announce (default 15).
+.TP
+.BI \-\-answer " seconds"
+How long to wait for the desk or the operator at each control (default 60).
+.TP
+.BI \-\-settle " ms"
+The pause after an input control, for its release and the rest of its motion (default 300).
+.TP
+.BI \-\-only " in\fR|\fPout\fR|\fPstrips\fR|\fPsections"
+Walk that part of the inventory only.
+.TP
+.BI \-\-strips " n"
+Walk the first
+.I n
+strips only.
+.TP
+.BI \-\-from " name"
+Start at the control with this name (as in the report).
+.TP
+.BI \-o ", " \-\-out " dir"
+Where the three files go (default the current directory).
+.SH EXIT STATUS
+0 when every control walked passed or was skipped; 1 when one was a mismatch, missing or failed;
+2 bad usage or no socket; 3 the desk is in another host's session; 4 no desk announced; 5 the desk
+did not ACK a write.
+.SH SEE ALSO
+.BR diginet-probe (1),
+.BR diginet-packet-helper (1).
+The census and how its record becomes a test: docs/census.md in the libdiginet sources.

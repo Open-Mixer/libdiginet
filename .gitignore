@@ -8,6 +8,7 @@
 !/tests/test_*.sh
 __pycache__/
 /tools/diginet-probe
+/tools/diginet-census
 /tools/diginet-packet-helper
 /fuzz/findings/
 /libdiginet*.so*

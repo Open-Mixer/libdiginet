@@ -4,7 +4,7 @@ A hand-kept Makefile, no build system to configure. You need a C11 compiler and 
 Nothing else: no library outside libc.
 
 ```
-make                          # libdiginet.a, libdiginet-transport.a and tools/diginet-probe
+make                          # libdiginet.a, libdiginet-transport.a, tools/diginet-probe and tools/diginet-census
 make test                     # the unit suite, the same command CI runs
 make install PREFIX=/usr/local [DESTDIR=...]
 make clean
@@ -60,7 +60,10 @@ that two desk emulators, one on each, come online through one mux over that one 
 
 `test_probe` runs `tools/diginet-probe` as its own process against the emulator, with the
 wire on descriptor 3 and the operator's answers on stdin, and checks both the probe's output
-and what the desk received.
+and what the desk received. `test_census` does the same with `tools/diginet-census`, the emulator
+playing the operator: the whole inventory of a Control|24 (1168 controls) in one run, then a wrong
+operator; it also reads a desk's record back when `tests/golden/census-c24.txt` exists
+(docs/census.md).
 
 ## diginet-probe
 
@@ -128,7 +131,7 @@ One source builds two shared libraries and a tool:
 | --- | --- | --- |
 | libdiginet, libdiginet-transport | `libdiginet` | `libdiginet0`, `libdiginet-transport0` |
 | headers, pkg-config, `diginet.ksy` | `libdiginet-devel` | `libdiginet-dev` |
-| `diginet-probe` | `diginet-tools` | `diginet-tools` |
+| `diginet-probe`, `diginet-census` | `diginet-tools` | `diginet-tools` |
 
 `packaging/libdiginet.spec` and `debian/` describe them; both run `make shared` and
 `make install-shared`, and `make test` against the result. The RPM gives `diginet-probe`
