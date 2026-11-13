@@ -135,12 +135,12 @@ test: $(TESTS) tests/test_probe tests/test_anyif tests/test_emu_child $(PROBE) $
 	$(RUN_TEST) tests/test_workflows.sh
 
 # No tracked file points into a private repository: Open-Mixer/.github's private-refs check, from a
-# checkout of it (FREEMIXER_DOTGITHUB, else ../freemixer-dotgithub). CI runs it, with the commit
+# checkout of it (OPENMIXER_DOTGITHUB, else ../freemixer-dotgithub). CI runs it, with the commit
 # message check, through the public-sources-check workflow; `make test` does not, so the package
 # builds need no such checkout.
-FREEMIXER_DOTGITHUB ?= ../freemixer-dotgithub
+OPENMIXER_DOTGITHUB ?= ../freemixer-dotgithub
 public-sources:
-	$(FREEMIXER_DOTGITHUB)/.github/actions/private-refs-check/check.sh .
+	$(OPENMIXER_DOTGITHUB)/.github/actions/private-refs-check/check.sh .
 
 # The Kaitai grammar compiles, and the parser it generates reads the golden frames with
 # the values the C suite asserts, and the frames captured from a Control|24 with the values
