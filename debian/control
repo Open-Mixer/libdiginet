@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Pau Aliagas <linuxnow@gmail.com>
 Build-Depends: debhelper-compat (= 13), git, pkgconf
 Standards-Version: 4.6.2
-Homepage: https://github.com/FreeMixer/libdiginet
+Homepage: https://github.com/Open-Mixer/libdiginet
 Rules-Requires-Root: no
 
 Package: libdiginet0
