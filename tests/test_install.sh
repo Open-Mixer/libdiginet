@@ -37,6 +37,9 @@ PKG_CONFIG_SYSROOT_DIR="$tmp/root" PKG_CONFIG_LIBDIR="$tmp/root/usr/lib/pkgconfi
 
 [ -x "$tmp/root/usr/bin/diginet-packet-helper" ] && [ -f "$tmp/root/usr/share/man/man1/diginet-packet-helper.1" ] ||
 	{ echo "FAIL: diginet-packet-helper or its manual page is not installed"; exit 1; }
+[ -x "$tmp/root/usr/bin/diginet-census" ] && [ -f "$tmp/root/usr/share/man/man1/diginet-census.1" ] &&
+	[ -f "$tmp/root/usr/include/diginet/diginet_census.h" ] ||
+	{ echo "FAIL: diginet-census, its manual page or diginet_census.h is not installed"; exit 1; }
 
 # The desk emulator is installed test support (libdiginet-emu): a consumer builds against it
 # through pkg-config alone, same as the protocol and transport above, and gets a real emulator
