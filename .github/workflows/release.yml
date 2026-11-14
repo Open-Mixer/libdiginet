@@ -3,12 +3,15 @@
 name: release
 
 # Packages through the shared release workflows of Open-Mixer/.github. A tag v<version> builds signed
-# RPMs (Fedora 44, x86_64 and aarch64) and DEBs (Debian bookworm and trixie, amd64 and arm64),
-# publishes them to the OpenMixer channel and attaches them to the GitHub release. A dispatched run
-# (workflow_dispatch) is a dry run: it builds and lints everything and publishes nothing.
+# RPMs and DEBs in the cells the shared release-matrix action chooses (the quick set while a release
+# wave is open, the whole matrix otherwise), publishes them to the OpenMixer channel and attaches them
+# to the GitHub release. A dispatched run (workflow_dispatch) is a dry run: it builds and lints
+# everything and publishes nothing.
 #
-# Either way, the packages the run built are then installed in clean containers of every release and
-# architecture, and a consumer is built against the development package (tests/package-check.sh).
+# Either way, the packages the run built are then installed in clean containers of the same cells, and
+# a consumer is built against the development package (tests/package-check.sh). The install checks ask
+# release-matrix for their cells with the inputs the shared builds hand it, so they never ask for a cell
+# the run did not build (0.1.10, run 43592063308). tests/test_workflow_cells.sh holds the rule.
 
 on:
   push:
@@ -44,42 +47,75 @@ jobs:
       channel-deps: false
     secrets: inherit
 
+  # The cells the builds above made: release-matrix with the inputs build-rpm.yml / build-deb.yml hand it (this file
+  # passes the builds no matrix, so their defaults), declared once here (Open-Mixer/.github#80).
+  plan-rpm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      cells: ${{ steps.matrix.outputs.cells }}
+      count: ${{ steps.matrix.outputs.count }}
+    steps:
+      - id: matrix
+        uses: Open-Mixer/.github/.github/actions/release-matrix@openmixer-v1
+        with:
+          kind: rpm
+          wave: ${{ vars.OMX_RELEASE_MATRIX }}
+          releases: '["44", "45"]'
+          arches: '["x86_64", "aarch64"]'
+
+  plan-deb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      cells: ${{ steps.matrix.outputs.cells }}
+      count: ${{ steps.matrix.outputs.count }}
+    steps:
+      - id: matrix
+        uses: Open-Mixer/.github/.github/actions/release-matrix@openmixer-v1
+        with:
+          kind: deb
+          wave: ${{ vars.OMX_RELEASE_MATRIX }}
+          releases: '["bookworm", "trixie"]'
+          arches: '["amd64", "arm64"]'
+
   install-rpm:
-    name: Install check (fc44, ${{ matrix.arch }})
-    needs: rpm
-    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    name: Install check (fc${{ matrix.cell.fedora }}, ${{ matrix.cell.arch }})
+    needs: [plan-rpm, rpm]
+    if: needs.plan-rpm.outputs.count != '0'
+    runs-on: ${{ matrix.cell.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     timeout-minutes: 20
-    container: fedora:44
+    container: fedora:${{ matrix.cell.fedora }}
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, aarch64]
+        cell: ${{ fromJSON(needs.plan-rpm.outputs.cells) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: libdiginet-rpms-fc44-${{ matrix.arch }}
+          name: libdiginet-rpms-fc${{ matrix.cell.fedora }}-${{ matrix.cell.arch }}
           path: pkgs
       - name: Install in a clean fedora, build a consumer, check the capability
         run: sh tests/package-check.sh pkgs
 
   install-deb:
-    name: Install check (${{ matrix.suite }}, ${{ matrix.arch }})
-    needs: deb
-    runs-on: ${{ matrix.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    name: Install check (${{ matrix.cell.suite }}, ${{ matrix.cell.arch }})
+    needs: [plan-deb, deb]
+    if: needs.plan-deb.outputs.count != '0'
+    runs-on: ${{ matrix.cell.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     timeout-minutes: 20
-    container: debian:${{ matrix.suite }}
+    container: debian:${{ matrix.cell.suite }}
     strategy:
       fail-fast: false
       matrix:
-        suite: [bookworm, trixie]
-        arch: [amd64, arm64]
+        cell: ${{ fromJSON(needs.plan-deb.outputs.cells) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: libdiginet-debs-${{ matrix.suite }}-${{ matrix.arch }}
+          name: libdiginet-debs-${{ matrix.cell.suite }}-${{ matrix.cell.arch }}
           path: pkgs
       # the shared workflow uploads each suite's .debs under a directory named after the suite
       - name: Install in a clean debian, build a consumer, check the capability
-        run: sh tests/package-check.sh pkgs/${{ matrix.suite }}
+        run: sh tests/package-check.sh pkgs/${{ matrix.cell.suite }}
