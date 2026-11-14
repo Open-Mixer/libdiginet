@@ -1,4 +1,4 @@
-Breaks the check of fuzz/fuzz_mux.c:325 (every session sends out of interface 1).
+Breaks the check of fuzz/fuzz_mux.c:359 (every session sends out of interface 1).
 Caught by the seed input "two-desks" of fuzz_mux.
 
 diff --git a/transport/src/diginet_mux.c b/transport/src/diginet_mux.c

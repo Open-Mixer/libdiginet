@@ -1,4 +1,4 @@
-Breaks the check of fuzz/fuzz_mux.c:224 (an announce from any MAC makes a desk present).
+Breaks the check of fuzz/fuzz_mux.c:240 (an announce from any MAC makes a desk present).
 Caught by the seed input "set-aside" of fuzz_mux.
 
 diff --git a/transport/src/diginet_mux.c b/transport/src/diginet_mux.c
