@@ -1,0 +1,16 @@
+Breaks the check of fuzz/fuzz_mux.c:300 (a frame routed to an attached desk that is not data reaches its session empty).
+Caught by the seed input "two-desks" of fuzz_mux.
+
+diff --git a/transport/src/diginet_mux.c b/transport/src/diginet_mux.c
+index e4bb18e..73101e1 100644
+--- a/transport/src/diginet_mux.c
++++ b/transport/src/diginet_mux.c
+@@ -145,7 +145,7 @@ int diginet_mux_rx(struct diginet_mux *m, const uint8_t *frame, size_t len, int
+ 		m->stats.rx_routed++;
+ 		d->last_rx_us = now_us;
+ 		if (d->attached)
+-			diginet_session_rx(&d->session, frame, len, now_us);
++			diginet_session_rx(&d->session, frame, f.h.cmd == DIGINET_CMD_DATA ? len : 0, now_us);
+ 		return DIGINET_OK;
+ 	}
+ 

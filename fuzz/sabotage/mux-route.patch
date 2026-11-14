@@ -1,4 +1,4 @@
-Breaks the check of fuzz/fuzz_mux.c:298 (a present desk's frames are taken from any interface).
+Breaks the check of fuzz/fuzz_mux.c:300 (a present desk's frames are taken from any interface).
 Caught by the seed input "pinned" of fuzz_mux.
 
 diff --git a/transport/src/diginet_mux.c b/transport/src/diginet_mux.c

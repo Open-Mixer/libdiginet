@@ -293,6 +293,8 @@ FUZZ_CHECK check_route_settle(void)
 		 * mutant: transport/src/diginet_mux.c:147 `if (d->attached)` -> `if (0)`
 		 * input: two-desks
 		 * mutant: transport/src/diginet_mux.c:178 `if (d->present && d->attached)` -> `if (0)`
+		 * input: auto-attach
+		 * mutant: transport/src/diginet_mux.c:179 `frame, len` -> `frame, 0`
 		 * input: auto-attach */
 		if (D[i].present && D[i].attached && (owed ? got <= D[i].rx_before : got != D[i].rx_before))
 			abort();
