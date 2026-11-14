@@ -1,4 +1,4 @@
-Breaks the check of fuzz/fuzz_mux.c:383 (a desk can be attached twice, its session started again).
+Breaks the check of fuzz/fuzz_mux.c:419 (a desk can be attached twice, its session started again).
 Caught by the seed input "attach-refusals" of fuzz_mux.
 
 diff --git a/transport/src/diginet_mux.c b/transport/src/diginet_mux.c

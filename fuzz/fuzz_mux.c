@@ -125,9 +125,11 @@ static struct {
 	uint32_t ack_counter;   /* the send counter of that frame */
 	uint8_t mac[SPEC_MAC];
 	const uint8_t *name, *body;
+	const uint8_t *ann;     /* the body of an announce this frame is to a session, or NULL */
+	size_t ann_len;
 } OW;
 static struct {
-	int appeared, routed;
+	int appeared, routed, desks;
 	int acks, ack_desk;
 	uint32_t ack_counter;
 } GOT;
@@ -155,6 +157,18 @@ static void op_begin(void)
 		D[i].rx_before = session_rx_count(i);
 }
 
+/* an e0 or e1 of the grammar to this interface's MAC or to broadcast: an attached session reads
+ * it as its desk's announce (diginet_session.h:102) */
+static void m_announce_to_session(const struct spec_frame *f, int ifx)
+{
+	uint8_t mine[SPEC_MAC];
+	if ((f->cmd != SPEC_CMD_E0 && f->cmd != SPEC_CMD_E1) || f->body_len < SPEC_ANN_MIN ||
+	    (memcmp(f->dst, SPEC_BCAST, SPEC_MAC) && !(host_mac(ifx, mine) && !memcmp(f->dst, mine, SPEC_MAC))))
+		return;
+	OW.ann = f->body;
+	OW.ann_len = f->body_len;
+}
+
 /* One frame on interface ifx, as the header reads it: a frame of the grammar from a present
  * desk, on its interface, is routed to it; else an announce of a Digidesign MAC no desk holds
  * makes a desk present in the lowest free slot (diginet_mux.h:9-19, :26-27) */
@@ -169,6 +183,7 @@ static void m_rx(const uint8_t *frame, size_t n, int ifx)
 			return;
 		D[i].last_rx = g_now;
 		OW.routed_to = i;
+		m_announce_to_session(&f, ifx);
 		/* an attached desk's session reads a data frame for this interface's MAC, or a
 		 * broadcast one, and ACKs it (diginet_session.h:15) */
 		uint8_t mine[SPEC_MAC];
@@ -197,6 +212,7 @@ static void m_rx(const uint8_t *frame, size_t n, int ifx)
 	memcpy(D[i].mac, f.src, SPEC_MAC);
 	D[i].ifx = ifx;
 	D[i].last_rx = g_now;
+	m_announce_to_session(&f, ifx);
 }
 
 /* the desk a name selects (docs/protocol.md:47) */
@@ -278,6 +294,18 @@ FUZZ_CHECK check_route_notice(const struct diginet_mux_notice *n)
 		abort();
 }
 
+FUZZ_CHECK check_route_announce(const struct diginet_mux_notice *n)
+{
+	const struct diginet_frame *f = n->session->frame;
+	/* The DIGINET_N_DESK notice of an announce the session was given carries that announce's
+	 * body (check_route_settle holds that one comes, and for no other frame).
+	 * contract: diginet_mux.h:20-23; diginet_session.h:102
+	 * mutant: transport/src/diginet_session.c:255 `.frame = f,` -> `.frame = NULL,`
+	 * input: auto-attach */
+	if (OW.ann && (!f || f->body_len != OW.ann_len || memcmp(f->body, OW.ann, OW.ann_len)))
+		abort();
+}
+
 FUZZ_CHECK check_route_settle(void)
 {
 	for (int i = 0; i < SLOTS; i++) {
@@ -301,10 +329,18 @@ FUZZ_CHECK check_route_settle(void)
 	 * desk's session send one a0 with the frame's send counter (check_send_frame holds where
 	 * it goes), and no other frame makes one.
 	 * contract: diginet_mux.h:12-19; diginet_session.h:15
-	 * mutant: transport/src/diginet_mux.c:148 `frame, len` -> `frame, 0`
+	 * mutant: transport/src/diginet_mux.c:148 `frame, len` -> `frame, f.h.cmd == DIGINET_CMD_DATA ? 0 : len`
 	 * input: two-desks */
 	if (GOT.acks != (OW.ack_to >= 0) ||
 	    (OW.ack_to >= 0 && (GOT.ack_desk != OW.ack_to || GOT.ack_counter != OW.ack_counter)))
+		abort();
+	int owed = OW.ann && ((OW.routed_to >= 0 && D[OW.routed_to].attached) || (OW.appeared && OW.attach_in_notice));
+	/* An announce that reaches an attached session, the one that made its desk appear
+	 * included, makes that session give one DIGINET_N_DESK notice, and no other frame makes one.
+	 * contract: diginet_mux.h:20-23; diginet_session.h:102
+	 * mutant: transport/src/diginet_mux.c:179 `frame, len` -> `frame, 0`
+	 * input: auto-attach */
+	if (GOT.desks != owed)
 		abort();
 }
 
@@ -513,6 +549,10 @@ static void notice(void *ctx, const struct diginet_mux_notice *n)
 		break;
 	case N_SESSION:
 		check_route_notice(n);
+		if (n->session->kind == DIGINET_N_DESK) {
+			GOT.desks++;
+			check_route_announce(n);
+		}
 		if (n->session->kind == DIGINET_N_STATE && n->session->state == DIGINET_S_IDLE &&
 		    n->session->reason == DIGINET_R_SILENCE)
 			D[n->desk].silent = 1;
