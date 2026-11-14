@@ -11,16 +11,46 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # no Fedora release written into a job: the cells come from check-matrix (rule 11-10, ruling D25)
+  fedora-cells:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/workflows
+      - uses: Open-Mixer/.github/.github/actions/fedora-cells@openmixer-v1
+  # the cells the build and the tests run: check-matrix's answer (rule 11-10: fc45 beside fc44;
+  # the quick set while a release wave is open, the whole matrix declared here otherwise)
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      cells: ${{ steps.m.outputs.cells }}
+      count: ${{ steps.m.outputs.count }}
+    steps:
+      - id: m
+        uses: Open-Mixer/.github/.github/actions/check-matrix@openmixer-v1
+        with:
+          wave: ${{ vars.OMX_RELEASE_MATRIX }}
+          rpm-releases: '["44", "45"]'
+          rpm-arches: '["x86_64"]'
+          deb-releases: '["bookworm", "trixie"]'
+          deb-arches: '["amd64"]'
+
+
   test:
-    name: build + test (${{ matrix.image }})
+    needs: checks
+    if: needs.checks.outputs.count != '0'
+    name: build + test (${{ matrix.cell.image }})
     runs-on: ubuntu-latest
     # A backstop only: every test carries its own timeout (tests/run-test.sh).
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        image: ['fedora:44', 'debian:bookworm', 'debian:trixie']
-    container: ${{ matrix.image }}
+        cell: ${{ fromJSON(needs.checks.outputs.cells) }}
+    container: ${{ matrix.cell.image }}
     steps:
       - name: Toolchain
         run: |

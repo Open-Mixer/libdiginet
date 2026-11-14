@@ -19,13 +19,35 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # the cells the harnesses run: check-matrix's answer (rule 11-10: fc45 beside fc44;
+  # the quick set while a release wave is open, the whole matrix declared here otherwise)
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      rpm: ${{ steps.m.outputs.rpm }}
+      rpm-count: ${{ steps.m.outputs.rpm-count }}
+    steps:
+      - id: m
+        uses: Open-Mixer/.github/.github/actions/check-matrix@openmixer-v1
+        with:
+          wave: ${{ vars.OMX_RELEASE_MATRIX }}
+          rpm-releases: '["44", "45"]'
+          rpm-arches: '["x86_64"]'
+
   fuzz:
-    name: fuzz the frame, the command grammar, the codecs and the session
+    needs: checks
+    if: needs.checks.outputs.rpm-count != '0'
+    name: fuzz the frame, the command grammar, the codecs and the session (${{ matrix.cell.image }})
     runs-on: ubuntu-latest
     # A backstop: fuzz-run spends 60 s on each of five harnesses, and fuzz-sabotage and
     # fuzz-records run seeds only.
     timeout-minutes: 40
-    container: fedora:44
+    strategy:
+      fail-fast: false
+      matrix:
+        cell: ${{ fromJSON(needs.checks.outputs.rpm) }}
+    container: ${{ matrix.cell.image }}
     steps:
       - name: clang, libFuzzer, llvm-cov and the static libc
         run: |
@@ -59,6 +81,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: fuzz-findings
+          name: fuzz-findings-fc${{ matrix.cell.fedora }}-${{ matrix.cell.arch }}
           path: fuzz/findings/
           if-no-files-found: ignore

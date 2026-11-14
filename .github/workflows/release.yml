@@ -43,22 +43,39 @@ jobs:
       requires: ''
       channel-deps: false
     secrets: inherit
+  # the cells the RPMs are installed in: check-matrix's answer (rule 11-10: fc45 beside fc44;
+  # the quick set while a release wave is open, the whole matrix declared here otherwise)
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      rpm: ${{ steps.m.outputs.rpm }}
+      rpm-count: ${{ steps.m.outputs.rpm-count }}
+    steps:
+      - id: m
+        uses: Open-Mixer/.github/.github/actions/check-matrix@openmixer-v1
+        with:
+          wave: ${{ vars.OMX_RELEASE_MATRIX }}
+          rpm-releases: '["44", "45"]'
+          rpm-arches: '["x86_64", "aarch64"]'
+
 
   install-rpm:
-    name: Install check (fc44, ${{ matrix.arch }})
-    needs: rpm
-    runs-on: ${{ matrix.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
+    name: Install check (${{ matrix.cell.image }}, ${{ matrix.cell.arch }})
+    needs: [checks, rpm]
+    if: needs.checks.outputs.rpm-count != '0'
+    runs-on: ${{ matrix.cell.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     timeout-minutes: 20
-    container: fedora:44
+    container: ${{ matrix.cell.image }}
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, aarch64]
+        cell: ${{ fromJSON(needs.checks.outputs.rpm) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: libdiginet-rpms-fc44-${{ matrix.arch }}
+          name: libdiginet-rpms-fc${{ matrix.cell.fedora }}-${{ matrix.cell.arch }}
           path: pkgs
       - name: Install in a clean fedora, build a consumer, check the capability
         run: sh tests/package-check.sh pkgs
