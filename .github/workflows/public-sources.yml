@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Pau Aliagas <linuxnow@gmail.com>
+name: public-sources
+# The fast checks, on every pull request: the trigger gate (no other workflow of this repository runs on a push or a
+# pull request), and the shared checks from Open-Mixer/.github (this pull request's commit messages, no tracked file
+# pointing into a private repository, no local copy of the checks, the public layout). Each takes seconds. The builds,
+# the test suites, the packages and the fuzzing are in the other workflows, run by workflow_dispatch (ci.yml on a pull
+# request's head before it is merged) and on a v* tag.
+on:
+  pull_request:
+concurrency:
+  group: public-sources-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  trigger-gate:
+    name: only this workflow runs on a pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Open-Mixer/.github/.github/actions/trigger-gate@openmixer-v1
+        with:
+          lint-workflow: public-sources.yml
