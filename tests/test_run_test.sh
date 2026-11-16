@@ -4,8 +4,8 @@
 #
 # tests/run-test.sh turns a test's exit 77 ("nothing tested") into a reported SKIP, and in CI that
 # must be red: DIGINET_TEST_SKIP_IS_FAIL=1 makes a SKIP a failure for every test not named in
-# DIGINET_TEST_SKIP_OK (test_packet and test_anyif by default: a container cannot make user
-# namespaces). The workflows set the switch (checked at the end), so a test that runs nothing in
+# DIGINET_TEST_SKIP_OK (test_packet, test_anyif and test_emu_child by default: a container cannot make an
+# unprivileged user+net namespace). The workflows set the switch (checked at the end), so a test that runs nothing in
 # CI is red.
 set -u
 top=$(cd "$(dirname "$0")/.." && pwd)

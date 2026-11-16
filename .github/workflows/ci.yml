@@ -40,11 +40,12 @@ jobs:
       - name: Build
         run: make
       - name: Unit tests
-        # A SKIP is red here (tests/run-test.sh), except test_packet and test_anyif: a container cannot
-        # make user namespaces (the host job below runs them).
+        # A SKIP is red here (tests/run-test.sh), except test_packet, test_anyif and test_emu_child: they need
+        # an unprivileged user+net namespace, which a container cannot make (the host job below runs them).
         run: make test OPENMIXER_DOTGITHUB="$PWD/dotgithub"
         env:
           DIGINET_TEST_SKIP_IS_FAIL: '1'
+          DIGINET_TEST_SKIP_OK: 'test_packet test_anyif test_emu_child'
       - name: Install, and build a consumer against the installed tree
         run: |
           make install PREFIX=/usr DESTDIR="$PWD/stage"
@@ -86,6 +87,8 @@ jobs:
         shell: bash
         env:
           DIGINET_TEST_SKIP_IS_FAIL: '1'
+          # nothing may skip here: the runner can make the namespaces the three tests need
+          DIGINET_TEST_SKIP_OK: none
       - name: The packet test ran
         run: "grep -q 'test_packet: ok' test.log"
       - name: The any-interface test ran (the helper's socket on veth pairs)

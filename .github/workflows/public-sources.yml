@@ -28,7 +28,7 @@ jobs:
   public-sources:
     uses: Open-Mixer/.github/.github/workflows/public-sources-check.yml@openmixer-v1
   # make test, the library's fast suite, on every pull request. A test that ran nothing is red here
-  # (DIGINET_TEST_SKIP_IS_FAIL, tests/run-test.sh); only test_packet and test_anyif may skip (user namespaces).
+  # (DIGINET_TEST_SKIP_IS_FAIL, tests/run-test.sh); only test_packet, test_anyif and test_emu_child may skip (user namespaces).
   fast-tests:
     name: make test
     runs-on: ubuntu-latest
@@ -42,6 +42,8 @@ jobs:
           path: dotgithub
       - name: Toolchain and the Python YAML module the workflow tests read
         run: sudo apt-get update && sudo apt-get -y install --no-install-recommends gcc libc6-dev make git pkg-config python3-yaml
+      - name: Allow unprivileged user namespaces (test_packet, test_anyif and test_emu_child need one)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
       - name: make test
         run: make test OPENMIXER_DOTGITHUB="$PWD/dotgithub"
         env:
