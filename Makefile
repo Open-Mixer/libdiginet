@@ -145,10 +145,10 @@ test: $(TESTS) tests/test_probe tests/test_anyif tests/test_emu_child tests/test
 	OPENMIXER_DOTGITHUB=$(OPENMIXER_DOTGITHUB) $(RUN_TEST) tests/test_workflow_cells.sh
 
 # No tracked file points into a private repository: Open-Mixer/.github's private-refs check, from a
-# checkout of it (OPENMIXER_DOTGITHUB, else ../freemixer-dotgithub). CI runs it, with the commit
+# checkout of it (OPENMIXER_DOTGITHUB, else ~/.cache/omx/openmixer-dotgithub). CI runs it, with the commit
 # message check, through the public-sources-check workflow; `make test` does not, so the package
 # builds need no such checkout.
-OPENMIXER_DOTGITHUB ?= ../freemixer-dotgithub
+OPENMIXER_DOTGITHUB ?= $(HOME)/.cache/omx/openmixer-dotgithub
 public-sources:
 	$(OPENMIXER_DOTGITHUB)/.github/actions/private-refs-check/check.sh .
 
