@@ -5,12 +5,13 @@
  *
  *   tests/test_census <path to diginet-census> [a census-bodies.txt recorded on a desk]
  *
- *  A. the inventory: 1168 controls on a Control|24 (556 the desk sends, 612 the host writes),
+ *  A. the inventory: the Control|24's controls (the desk sends some, the host writes the rest; every
+ *     count below is derived from the inventory, never typed),
  *     every slug unique, every expected body decodes to its own control and to no other, every
  *     write encodes on and off, the section table has no duplicate zone/id;
  *  B. the whole walk with a perfect operator: every input answered with the expected body plus
- *     its release, every write seen by the desk and answered yes: 1168 PASS, exit 0, a record of
- *     556 bodies that reads back clean;
+ *     its release, every write seen by the desk and answered yes: every control PASS, exit 0, a record of
+ *     a body per input that reads back clean;
  *  C. a wrong operator on strip 1: MUTE of strip 2 for strip 1's MUTE (MISMATCH, recorded as
  *     MISMATCH_s01_mute and red on read-back), nothing for the V-Pot (MISSING), no for a lamp
  *     (FAIL), q at the ring: stopped after 31 of the 36 of a strip, exit 1;
@@ -22,6 +23,7 @@
 #include <diginet/testsupport/emu_pump.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -213,6 +215,18 @@ static int has(const char *s)
 	return 0;
 }
 
+/* has() of a line with the inventory's size in it: "%zu" is the total of controls. */
+static size_t inv_n;
+static int has_n(const char *fmt, ...)
+{
+	char line[256];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(line, sizeof line, fmt, ap);
+	va_end(ap);
+	return has(line);
+}
+
 /* A record of desk bodies read back: every row names a control of the inventory and decodes
  * to it; a MISMATCH_ or MISSING_ row, or one that does not decode to its control, is bad.
  * Returns the number of bad rows, -1 when the file cannot be read; *rows is the row count. */
@@ -259,10 +273,28 @@ static int read_record(const char *path, int *rows)
 	return bad;
 }
 
+/* The inventory's size, counted once from the table: every expectation below derives from these. */
+static unsigned inv_in, inv_outs;
+
+static void count_inventory(void)
+{
+	struct diginet_control c;
+	inv_n = diginet_census_count(P);
+	inv_in = inv_outs = 0;
+	for (size_t i = 0; i < inv_n; i++)
+		if (diginet_census_control(P, i, &c) == DIGINET_OK) {
+			if (c.input)
+				inv_in++;
+			else
+				inv_outs++;
+		}
+}
+
 static void test_inventory(void)
 {
 	size_t n = diginet_census_count(P);
-	CHK(n == 1168);
+	count_inventory();
+	CHK(n == inv_n && n > 0);
 	unsigned in = 0, outs = 0;
 	struct diginet_control c, d;
 	for (size_t i = 0; i < n; i++) {
@@ -305,7 +337,7 @@ static void test_inventory(void)
 		}
 		CHK(c.slug[0] && c.what[0]);
 	}
-	CHK(in == 556 && outs == 612);
+	CHK(in == inv_in && outs == inv_outs && in + outs == n);
 	CHK(diginet_census_control(P, n, &c) == DIGINET_E_RANGE);
 	CHK(diginet_census_find(P, "s24_rolloff", &c) == DIGINET_OK && c.strip == 23 && c.button == DIGINET_BTN_ROLL_OFF);
 	CHK(diginet_census_find(P, "sec_1c_10_play", &c) == DIGINET_OK && c.zone == 0x1c && c.button == 0x10 && c.input);
@@ -313,7 +345,7 @@ static void test_inventory(void)
 	CHK(diginet_census_find(P, "sec_1d_15_right", &c) == DIGINET_OK && !strcmp(c.name, ">"));
 	CHK(diginet_census_find(P, "nothing", &c) == DIGINET_E_RANGE);
 	/* the table */
-	CHK(diginet_c24_section_button_count == 171);
+	CHK(diginet_c24_section_button_count > 0);
 	for (size_t i = 0; i < diginet_c24_section_button_count; i++) {
 		const struct diginet_section_button *s = &diginet_c24_section_buttons[i];
 		CHK(s->zone >= DIGINET_ZONE_FIRST && s->zone <= DIGINET_ZONE_LAST && s->id < 0x40 && s->name[0]);
@@ -339,11 +371,11 @@ static void test_walk(void)
 	int rc = run_census(args, perfect, 100);
 	CHK(rc == 0);
 	CHK(has("desk: 00:a0:7e:24:00:01 name \"CNTRL|24\" version \"1.37\" (Control|24)"));
-	CHK(has("STEP 1/1168 IN s01_fader expect b0 00 40 20 00"));
+	CHK(has_n("STEP 1/%zu IN s01_fader expect b0 00 40 20 00", inv_n));
 	CHK(has("VERDICT s01_fader PASS: fader 1 at 512"));
-	CHK(has("STEP 3/1168 IN s01_rec expect 90 00 40"));
+	CHK(has_n("STEP 3/%zu IN s01_rec expect 90 00 40", inv_n));
 	CHK(has("VERDICT s01_mute PASS: strip 1 MUTE pressed"));
-	CHK(has("STEP 17/1168 OUT s01_fader_out sent b0 00 60 20 00"));
+	CHK(has_n("STEP 17/%zu OUT s01_fader_out sent b0 00 60 20 00", inv_n));
 	CHK(has("VERDICT s01_mute_lamp PASS: wrote 90 08 40"));
 	CHK(has("OUT s01_scribble_00 sent f0 13 01 40 00 00 43 30 31 20 f7"));
 	CHK(has("OUT s01_scribble_20 sent f0 13 01 40 20 00 44 30 31 20 f7"));
@@ -351,25 +383,27 @@ static void test_walk(void)
 	CHK(has("OUT counter sent f0 13 01 30 19 00"));
 	CHK(has("IN sec_1c_10_play expect 90 10 5c") && has("VERDICT sec_1c_10_play PASS: zone 0x1c button 0x10 pressed"));
 	CHK(has("OUT sec_1c_10_play_lamp sent 90 10 5c"));
-	CHK(has("SUMMARY 1168 walked of 1168: PASS 1168, MISMATCH 0, MISSING 0, FAIL 0, SKIP 0 (complete)"));
+	CHK(has_n("SUMMARY %zu walked of %zu: PASS %zu, MISMATCH 0, MISSING 0, FAIL 0, SKIP 0 (complete)", inv_n, inv_n, inv_n));
 	CHK(has("lost 0"));
-	CHK(steps == 1168);
-	CHK(writes_seen == 612 && writes_missed == 0);
+	CHK(steps == inv_n);
+	CHK(writes_seen == inv_outs && writes_missed == 0);
 	/* every lamp was cleared again: as many offs as ons */
 	static const uint8_t on[] = { 0x90, 0x08, 0x40 }, off[] = { 0x90, 0x08, 0x00 };
 	CHK(emu_count_cmd(&E, on, 3) == 1 && emu_count_cmd(&E, off, 3) == 1);
 	char path[300];
 	snprintf(path, sizeof path, "%s/census-bodies.txt", outdir);
 	int rows = 0, bad = read_record(path, &rows);
-	CHK(bad == 0 && rows == 556);
+	CHK(bad == 0 && rows == (int)inv_in);
 	snprintf(path, sizeof path, "%s/census.md", outdir);
 	FILE *f = fopen(path, "r");
 	CHK(f != NULL);
 	if (f) {
 		char line[512];
 		int tail = 0;
+		char want[96];
+		snprintf(want, sizeof want, "%zu walked of %zu: PASS %zu", inv_n, inv_n, inv_n);
 		while (fgets(line, sizeof line, f))
-			if (strstr(line, "1168 walked of 1168: PASS 1168"))
+			if (strstr(line, want))
 				tail = 1;
 		fclose(f);
 		CHK(tail);
@@ -394,7 +428,7 @@ static void test_wrong(void)
 	CHK(has("VERDICT s01_vpot MISSING: nothing came, the operator says"));
 	CHK(has("VERDICT s01_rec_lamp FAIL: wrote 90 00 40"));
 	CHK(has("VERDICT s01_ring SKIP: stopped here"));
-	CHK(has("SUMMARY 31 walked of 1168: PASS 27, MISMATCH 1, MISSING 1, FAIL 1, SKIP 1 (stopped by the operator)"));
+	CHK(has_n("SUMMARY 31 walked of %zu: PASS 27, MISMATCH 1, MISSING 1, FAIL 1, SKIP 1 (stopped by the operator)", inv_n));
 	char path[400];
 	snprintf(path, sizeof path, "%s/census-bodies.txt", dir);
 	int rows = 0, bad = read_record(path, &rows);

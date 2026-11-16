@@ -3,8 +3,8 @@
 name: public-sources
 # The fast checks, on every pull request: the trigger gate (no other workflow of this repository runs on a push or a
 # pull request), and the shared checks from Open-Mixer/.github (this pull request's commit messages, no tracked file
-# pointing into a private repository, no local copy of the checks, the public layout). Each takes seconds. The builds,
-# the test suites, the packages and the fuzzing are in the other workflows, run by workflow_dispatch (ci.yml on a pull
+# pointing into a private repository, no local copy of the checks, the public layout), and `make test` (seconds, one
+# runner, a SKIP is red). The container cells, the AF_PACKET run, the packages and the fuzzing are in the other workflows, run by workflow_dispatch (ci.yml on a pull
 # request's head before it is merged) and on a v* tag.
 on:
   pull_request:
@@ -27,3 +27,24 @@ jobs:
   # local copy of either (Open-Mixer/.github's public-sources-check)
   public-sources:
     uses: Open-Mixer/.github/.github/workflows/public-sources-check.yml@openmixer-v1
+  # make test, the library's fast suite, on every pull request. A test that ran nothing is red here
+  # (DIGINET_TEST_SKIP_IS_FAIL, tests/run-test.sh); only test_packet, test_anyif and test_emu_child may skip (user namespaces).
+  fast-tests:
+    name: make test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Open-Mixer/.github
+          ref: openmixer-v1
+          path: dotgithub
+      - name: Toolchain and the Python YAML module the workflow tests read
+        run: sudo apt-get update && sudo apt-get -y install --no-install-recommends gcc libc6-dev make git pkg-config python3-yaml
+      - name: Allow unprivileged user namespaces (test_packet, test_anyif and test_emu_child need one)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+      - name: make test
+        run: make test OPENMIXER_DOTGITHUB="$PWD/dotgithub"
+        env:
+          DIGINET_TEST_SKIP_IS_FAIL: '1'

@@ -1,6 +1,7 @@
 name: ci
 # Run by workflow_dispatch: on a pull request's head before it is merged (gh workflow run ci.yml --ref <branch>),
-# and on demand. The fast checks run on every pull request from public-sources.yml.
+# and on demand. The fast checks, and make test on one runner, run on every pull request from public-sources.yml
+# (the trigger gate allows that one workflow a pull_request trigger).
 on:
   workflow_dispatch:
 concurrency:
@@ -23,17 +24,28 @@ jobs:
       - name: Toolchain
         run: |
           if command -v dnf >/dev/null; then
-            dnf -y install gcc make git pkgconf-pkg-config diffutils
+            dnf -y install gcc make git pkgconf-pkg-config diffutils python3-pyyaml
           else
-            apt-get update && apt-get -y install --no-install-recommends gcc libc6-dev make git pkg-config ca-certificates
+            apt-get update && apt-get -y install --no-install-recommends gcc libc6-dev make git pkg-config ca-certificates python3-yaml
           fi
       - uses: actions/checkout@v4
       - name: Trust the checkout
         run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+      - name: The shared checks the workflow tests render (tests/test_workflow_cells.sh, arms D and E)
+        uses: actions/checkout@v4
+        with:
+          repository: Open-Mixer/.github
+          ref: openmixer-v1
+          path: dotgithub
       - name: Build
         run: make
       - name: Unit tests
-        run: make test
+        # A SKIP is red here (tests/run-test.sh), except test_packet, test_anyif and test_emu_child: they need
+        # an unprivileged user+net namespace, which a container cannot make (the host job below runs them).
+        run: make test OPENMIXER_DOTGITHUB="$PWD/dotgithub"
+        env:
+          DIGINET_TEST_SKIP_IS_FAIL: '1'
+          DIGINET_TEST_SKIP_OK: 'test_packet test_anyif test_emu_child'
       - name: Install, and build a consumer against the installed tree
         run: |
           make install PREFIX=/usr DESTDIR="$PWD/stage"
@@ -61,11 +73,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          repository: Open-Mixer/.github
+          ref: openmixer-v1
+          path: dotgithub
+      - name: The Python YAML module the workflow tests read
+        run: python3 -c 'import yaml' || { sudo apt-get update && sudo apt-get -y install python3-yaml; }
       - name: Allow unprivileged user namespaces
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
       - name: make test
-        run: make test 2>&1 | tee test.log; test "${PIPESTATUS[0]}" -eq 0
+        run: make test OPENMIXER_DOTGITHUB="$PWD/dotgithub" 2>&1 | tee test.log; test "${PIPESTATUS[0]}" -eq 0
         shell: bash
+        env:
+          DIGINET_TEST_SKIP_IS_FAIL: '1'
+          # nothing may skip here: the runner can make the namespaces the three tests need
+          DIGINET_TEST_SKIP_OK: none
       - name: The packet test ran
         run: "grep -q 'test_packet: ok' test.log"
       - name: The any-interface test ran (the helper's socket on veth pairs)
