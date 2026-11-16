@@ -19,7 +19,8 @@ chmod +x "$d"/test_*
 bad=0
 want() { # <expected rc> <description> <env...> -- ; runs run-test on $TEST
 	exp=$1; shift; desc=$1; shift
-	env "$@" "$rt" "$TEST" >/dev/null 2>&1; rc=$?
+	# the caller's own allow-list never leaks in (CI sets DIGINET_TEST_SKIP_OK=none on the runner): each arm states it
+	env -u DIGINET_TEST_SKIP_OK "$@" "$rt" "$TEST" >/dev/null 2>&1; rc=$?
 	if [ "$rc" = "$exp" ]; then echo "ok   $desc"; else echo "FAIL $desc: rc $rc, wanted $exp"; bad=1; fi
 }
 TEST=$d/test_nothing
@@ -27,6 +28,7 @@ want 0 "a SKIP is not a failure outside CI" DIGINET_TEST_SKIP_IS_FAIL=
 want 1 "a SKIP is a failure when DIGINET_TEST_SKIP_IS_FAIL=1" DIGINET_TEST_SKIP_IS_FAIL=1
 TEST=$d/test_packet
 want 0 "test_packet may skip (user namespaces) in CI" DIGINET_TEST_SKIP_IS_FAIL=1
+want 1 "with DIGINET_TEST_SKIP_OK=none nothing may skip, test_packet included" DIGINET_TEST_SKIP_IS_FAIL=1 DIGINET_TEST_SKIP_OK=none
 TEST=$d/test_ok
 want 0 "a pass stays a pass in CI" DIGINET_TEST_SKIP_IS_FAIL=1
 # every workflow that runs `make test` sets the switch, or a cell could run nothing and pass
