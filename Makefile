@@ -142,6 +142,8 @@ test: $(TESTS) tests/test_probe tests/test_anyif tests/test_emu_child tests/test
 	$(RUN_TEST) tests/test_install.sh
 	$(RUN_TEST) tests/conformance-packaging.sh
 	$(RUN_TEST) tests/test_workflows.sh
+	$(RUN_TEST) tests/test_run_test.sh
+	$(RUN_TEST) tests/test_census_derived.sh
 	OPENMIXER_DOTGITHUB=$(OPENMIXER_DOTGITHUB) $(RUN_TEST) tests/test_workflow_cells.sh
 
 # No tracked file points into a private repository: Open-Mixer/.github's private-refs check, from a
