@@ -61,7 +61,7 @@ jobs:
         with:
           kind: rpm
           wave: ${{ vars.OMX_RELEASE_MATRIX }}
-          releases: '["44", "45"]'
+          releases: '["45"]'
           arches: '["x86_64", "aarch64"]'
 
   plan-deb:
