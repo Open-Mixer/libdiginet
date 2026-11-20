@@ -76,7 +76,7 @@ jobs:
         with:
           kind: deb
           wave: ${{ vars.OMX_RELEASE_MATRIX }}
-          releases: '["bookworm", "trixie"]'
+          releases: '["trixie"]'
           arches: '["amd64", "arm64"]'
 
   install-rpm:
