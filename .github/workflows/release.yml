@@ -85,7 +85,7 @@ jobs:
   install-rpm:
     name: Install check (fc${{ matrix.cell.fedora }}, ${{ matrix.cell.arch }})
     needs: [plan-rpm, rpm]
-    if: needs.plan-rpm.outputs.count != '0'
+    if: needs.plan-rpm.outputs.count != '0' && needs.rpm.outputs.skipped != 'true'
     runs-on: ${{ matrix.cell.arch == 'aarch64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     timeout-minutes: 20
     container: fedora:${{ matrix.cell.fedora }}
@@ -105,7 +105,7 @@ jobs:
   install-deb:
     name: Install check (${{ matrix.cell.suite }}, ${{ matrix.cell.arch }})
     needs: [plan-deb, deb]
-    if: needs.plan-deb.outputs.count != '0'
+    if: needs.plan-deb.outputs.count != '0' && needs.deb.outputs.skipped != 'true'
     runs-on: ${{ matrix.cell.arch == 'arm64' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     timeout-minutes: 20
     container: debian:${{ matrix.cell.suite }}
