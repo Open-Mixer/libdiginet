@@ -1105,6 +1105,13 @@ static void mux_seeds(void)
 	m_ann(0, 1, K_C24);
 	emit("mux", "two-desks");
 
+	/* a desk online on its a0 says goodbye with an e3 to this host: its session reads it */
+	mux_config(1, 30000, 25000, 3000);
+	m_ann(0, 1, K_C24);
+	m_frame(0, 1, MS_ACK | MS_ACK_LAST, 1, NULL, 0);
+	m_frame(0, 1, MS_E3, 2, NULL, 0);
+	emit("mux", "desk-leaves");
+
 	/* the same desk heard on another interface: set aside */
 	mux_config(1, 30000, 25000, 3000);
 	m_ann(0, 1, K_C24);
