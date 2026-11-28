@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: ['fedora:45', 'debian:bookworm', 'debian:trixie']
+        image: ['fedora:45', 'debian:trixie']
     container: ${{ matrix.image }}
     steps:
       - name: Toolchain
