@@ -1,4 +1,4 @@
-Breaks the check of fuzz/fuzz_mux.c:344 (a frame routed to an attached desk that is not data reaches its session empty).
+Breaks the check of fuzz/fuzz_mux.c:377 (a frame routed to an attached desk that is not data reaches its session empty).
 Caught by the seed input "two-desks" of fuzz_mux.
 
 diff --git a/transport/src/diginet_mux.c b/transport/src/diginet_mux.c

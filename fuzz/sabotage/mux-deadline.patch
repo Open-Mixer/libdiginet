@@ -1,4 +1,4 @@
-Breaks the check of fuzz/fuzz_mux.c:474 (the deadline leaves out each attached session's own).
+Breaks the check of fuzz/fuzz_mux.c:508 (the deadline leaves out each attached session's own).
 Caught by the seed input "two-desks" of fuzz_mux.
 
 diff --git a/transport/src/diginet_mux.c b/transport/src/diginet_mux.c

@@ -1,4 +1,4 @@
-Breaks the check of fuzz/fuzz_mux.c:396 (a desk silent for exactly gone_ms is not gone yet).
+Breaks the check of fuzz/fuzz_mux.c:430 (a desk silent for exactly gone_ms is not gone yet).
 Caught by the seed input "gone-exact" of fuzz_mux.
 
 diff --git a/transport/src/diginet_mux.c b/transport/src/diginet_mux.c

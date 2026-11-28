@@ -3,7 +3,7 @@
 # libdiginet-transport, the wire under it, from one source and one version; diginet-tools
 # carries diginet-probe, diginet-census and diginet-packet-helper.
 Name:           libdiginet
-Version:        0.1.10
+Version:        0.1.11
 # The sonames' majors. rpm derives this package's provides and every consumer's requires from
 # them. They copy DIGINET_ABI and DIGINET_TRANSPORT_ABI of include/diginet/diginet.h, and
 # tests/conformance-packaging.sh (in make test) refuses a copy that disagrees.
@@ -124,6 +124,12 @@ make CFLAGS="%{optflags}" test
 %{_mandir}/man1/diginet-packet-helper.1*
 
 %changelog
+* Sat Nov 28 2026 Pau Aliagas <linuxnow@gmail.com> - 0.1.11-1
+- fuzz_mux: every frame routed to a present desk's open session is read once
+  by it, whatever its command; a recorded abort exits 134 without a core, so
+  a met check never reads as a timeout (#30).
+- No change to the library or its ABI.
+
 * Fri Nov 13 2026 Pau Aliagas <linuxnow@gmail.com> - 0.1.10-1
 - diginet-census and the census inventory (diginet_census.h): every control of a Control|24
   (1168: 556 the desk sends, 612 the host writes; the section buttons from ReaControl24's map)

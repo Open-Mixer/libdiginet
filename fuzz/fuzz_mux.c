@@ -115,6 +115,8 @@ static struct {
 	int ifx;
 	uint64_t last_rx;
 	uint64_t rx_before;     /* the session's frame count before the operation */
+	uint64_t read_before;   /* the frames its session had read (rx_frames) before it */
+	int open_before;        /* its session was not closed before it */
 	uint32_t last_sent;     /* the counter of the last frame its session sent */
 } D[SLOTS];
 
@@ -122,6 +124,7 @@ static struct {
 static struct {
 	int appeared, slot, ifx, routed_to, attach_in_notice;
 	int ack_to;             /* the attached desk whose session owes this frame an a0, or -1 */
+	int to_host;            /* the frame is to this interface's MAC or to broadcast */
 	uint32_t ack_counter;   /* the send counter of that frame */
 	uint8_t mac[SPEC_MAC];
 	const uint8_t *name, *body;
@@ -148,13 +151,28 @@ static uint64_t session_rx_count(int i)
 	return s ? s->stats.rx_frames + s->stats.rx_ignored : 0;
 }
 
+static uint64_t session_read_count(int i)
+{
+	struct diginet_session *s = diginet_mux_session(&g_m, (unsigned)i);
+	return s ? s->stats.rx_frames : 0;
+}
+
+static int session_open(int i)
+{
+	struct diginet_session *s = diginet_mux_session(&g_m, (unsigned)i);
+	return s && s->state != DIGINET_S_CLOSED;
+}
+
 static void op_begin(void)
 {
 	memset(&OW, 0, sizeof OW);
 	memset(&GOT, 0, sizeof GOT);
 	OW.slot = OW.routed_to = OW.ack_to = -1;
-	for (int i = 0; i < SLOTS; i++)
+	for (int i = 0; i < SLOTS; i++) {
 		D[i].rx_before = session_rx_count(i);
+		D[i].read_before = session_read_count(i);
+		D[i].open_before = session_open(i);
+	}
 }
 
 /* an e0 or e1 of the grammar to this interface's MAC or to broadcast: an attached session reads
@@ -177,6 +195,8 @@ static void m_rx(const uint8_t *frame, size_t n, int ifx)
 	struct spec_frame f;
 	if (spec_read_frame(frame, n, &f) != SPEC_OK)
 		return;
+	uint8_t me[SPEC_MAC];
+	OW.to_host = !memcmp(f.dst, SPEC_BCAST, SPEC_MAC) || (host_mac(ifx, me) && !memcmp(f.dst, me, SPEC_MAC));
 	int i = m_find(f.src);
 	if (i >= 0) {
 		if (D[i].ifx != ifx)
@@ -342,6 +362,20 @@ FUZZ_CHECK check_route_settle(void)
 	 * input: auto-attach */
 	if (GOT.desks != owed)
 		abort();
+	for (int i = 0; i < SLOTS; i++) {
+		int read = D[i].present && D[i].attached && D[i].open_before && OW.to_host &&
+			   ((i == OW.routed_to) || (i == OW.slot && OW.attach_in_notice));
+		/* A frame of the grammar from a present desk on its interface, to this interface's
+		 * MAC or to broadcast, reaches that desk's open session whole, whatever its command:
+		 * the session reads it, and counts it in rx_frames exactly once.
+		 * contract: diginet_mux.h:12-19, :21-23; diginet_session.h:128-129
+		 * mutant: transport/src/diginet_mux.c:148 `frame, len` -> `frame, f.h.cmd == DIGINET_CMD_ACK ? 0 : len`
+		 * input: two-desks
+		 * mutant: transport/src/diginet_mux.c:148 `frame, len` -> `frame, f.h.cmd == DIGINET_CMD_DISCONNECT ? 0 : len`
+		 * input: desk-leaves */
+		if (read && session_read_count(i) != D[i].read_before + 1)
+			abort();
+	}
 }
 
 FUZZ_CHECK check_send_frame(int ifx, const uint8_t *frame, size_t len)
@@ -542,6 +576,8 @@ static void notice(void *ctx, const struct diginet_mux_notice *n)
 			if (want == SPEC_OK) {
 				D[n->desk].attached = 1;
 				D[n->desk].rx_before = 0;
+				D[n->desk].read_before = 0;
+				D[n->desk].open_before = 1;
 				OW.attach_in_notice = 1;
 				check_attach_session((int)n->desk);
 			}
@@ -644,6 +680,8 @@ static void op_attach(struct fuzz_in *in)
 	if (want == SPEC_OK) {
 		D[slot].attached = 1;
 		D[slot].rx_before = session_rx_count((int)slot);
+		D[slot].read_before = session_read_count((int)slot);
+		D[slot].open_before = session_open((int)slot);
 		check_attach_session((int)slot);
 	}
 	settle(0);

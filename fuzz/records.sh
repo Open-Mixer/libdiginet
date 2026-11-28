@@ -36,16 +36,18 @@ mkdir -p "$B/base"
 # an aborting run leaves no core in the tree
 ulimit -c 0
 
-# each abort() of a harness says which it is before it aborts; `(abort)` is the function, not
-# this macro
+# each abort() of a harness says which it is, then exits 134 as abort() would; by _exit, not
+# SIGABRT, so no core goes to the core_pattern helper (a pipe ignores ulimit -c), whose wait
+# under load outlasted the timeout and read a met abort as 124
 cat >"$B/record-abort.h" <<'EOF'
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 static inline void fuzz_record_abort(const char *file, int line)
 {
 	fprintf(stderr, "fuzz-records: abort at %s:%d\n", file, line);
 	fflush(stderr);
-	(abort)();
+	_exit(134);
 }
 #define abort() fuzz_record_abort(__FILE__, __LINE__)
 EOF
