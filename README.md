@@ -15,7 +15,7 @@ sudo dnf install https://www.openmixer.org/rpm/openmixer-release.noarch.rpm
 sudo dnf install libdiginet-devel diginet-tools
 ```
 
-Debian bookworm and trixie (also Raspberry Pi OS):
+Debian trixie (also Raspberry Pi OS):
 
 ```
 curl -fsSLO https://www.openmixer.org/deb/openmixer-release.deb && sudo apt install ./openmixer-release.deb
