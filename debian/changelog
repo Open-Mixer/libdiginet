@@ -1,3 +1,12 @@
+libdiginet (0.1.11) unstable; urgency=medium
+
+  * fuzz_mux: every frame routed to a present desk's open session is read
+    once by it, whatever its command; a recorded abort exits 134 without a
+    core, so a met check never reads as a timeout (#30).
+  * No change to the library or its ABI.
+
+ -- Pau Aliagas <linuxnow@gmail.com>  Sat, 28 Nov 2026 01:19:51 +0100
+
 libdiginet (0.1.10) unstable; urgency=medium
 
   * diginet-census and the census inventory (diginet_census.h): every

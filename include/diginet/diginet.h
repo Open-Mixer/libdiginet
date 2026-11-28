@@ -20,8 +20,8 @@ extern "C" {
 
 #define DIGINET_VERSION_MAJOR  0
 #define DIGINET_VERSION_MINOR  1
-#define DIGINET_VERSION_PATCH  10
-#define DIGINET_VERSION_STRING "0.1.10"
+#define DIGINET_VERSION_PATCH  11
+#define DIGINET_VERSION_STRING "0.1.11"
 /* The sonames' majors: libdiginet.so.DIGINET_ABI and libdiginet-transport.so.DIGINET_TRANSPORT_ABI.
  * packaging/libdiginet.spec and debian/ carry copies; tests/conformance-packaging.sh holds them
  * to these, and the version to the VERSION file. */
