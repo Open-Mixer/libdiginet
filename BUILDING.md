@@ -116,10 +116,10 @@ make fuzz fuzz-run FUZZ_TIME=60 fuzz-sabotage fuzz-records fuzz-coverage fuzz-st
 
 ## CI
 
-`.github/workflows/ci.yml` runs `make`, `make test` and `make install` in fedora:44,
+`.github/workflows/ci.yml` runs `make`, `make test` and `make install` in fedora:45,
 debian:bookworm and debian:trixie containers, `make test` once more on the bare runner (where
 the namespace test can run), and `make ksy-check` in a Debian container with the compiler
-installed. `.github/workflows/fuzz.yml` builds the harnesses in fedora:44, fuzzes each for 60 s
+installed. `.github/workflows/fuzz.yml` builds the harnesses in fedora:45, fuzzes each for 60 s
 and runs `make fuzz-corpus-check`, `make fuzz-sabotage`, `make fuzz-records`,
 `make fuzz-coverage` and `make fuzz-static`.
 
@@ -146,7 +146,7 @@ The version is the `VERSION` file; the sonames' majors are `DIGINET_ABI` and
 Set the version in `VERSION`, `include/diginet/diginet.h`, `Version:` in the spec and the top
 entry of `debian/changelog`, then tag `vX.Y.Z`. The tag runs `.github/workflows/release.yml`,
 which calls the shared `build-rpm.yml` and `build-deb.yml` workflows of Open-Mixer/.github: signed
-RPMs for Fedora 44 (x86_64, aarch64) and DEBs for Debian bookworm and trixie (amd64, arm64) are
+RPMs for Fedora 45 (x86_64, aarch64) and DEBs for Debian trixie (amd64, arm64) are
 published to the OpenMixer channel and attached to the GitHub release. A pull request runs the
 same workflows as a dry run that builds, lints and publishes nothing, then installs the packages
 it built in clean containers and builds a consumer against the development package. Git history

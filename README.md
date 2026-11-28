@@ -8,14 +8,14 @@ Early, and not yet tried on a desk.
 
 ## Install
 
-Fedora 44:
+Fedora 45 (x86_64, aarch64):
 
 ```
 sudo dnf install https://www.openmixer.org/rpm/openmixer-release.noarch.rpm
 sudo dnf install libdiginet-devel diginet-tools
 ```
 
-Debian bookworm and trixie (also Raspberry Pi OS):
+Debian trixie (amd64, arm64), also Raspberry Pi OS and Zynthian:
 
 ```
 curl -fsSLO https://www.openmixer.org/deb/openmixer-release.deb && sudo apt install ./openmixer-release.deb
